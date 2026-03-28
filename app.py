@@ -1,5 +1,15 @@
+from fastapi import FastAPI
 import gradio as gr
 
+# FastAPI app
+app_fastapi = FastAPI()
+
+@app_fastapi.post("/reset")
+def reset():
+    return {"state": "reset done"}
+
+
+# Your function
 def study_helper(text, mode):
     text = text.strip()
 
@@ -36,6 +46,8 @@ def study_helper(text, mode):
     else:
         return f"🤖 {text.capitalize()} is explained in simple and easy terms for better understanding."
 
+
+# Gradio UI
 interface = gr.Interface(
     fn=study_helper,
     inputs=[
@@ -47,4 +59,5 @@ interface = gr.Interface(
     description="Explain concepts or summarize long text easily"
 )
 
-interface.launch()
+# 🔥 IMPORTANT: Mount Gradio to FastAPI
+app = gr.mount_gradio_app(app_fastapi, interface, path="/")
