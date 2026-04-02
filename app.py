@@ -1,46 +1,36 @@
-from fastapi import FastAPI
 import gradio as gr
+from openai import OpenAI
+import os
 
-app = FastAPI()
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-# ===== OpenEnv REQUIRED APIs =====
-@app.post("/reset")
-def reset():
-    return {"state": "reset done"}
-
-@app.get("/state")
-def state():
-    return {"status": "running"}
-
-@app.post("/step")
-def step(action: dict):
-    return {"result": "ok", "action_received": action}
-
-# ===== AI FUNCTION =====
-def study_helper(text, mode):
-    text = text.strip()
-
-    if not text:
-        return "Please enter something."
-
-    if mode == "Summarize":
-        if len(text.split()) < 10:
-            return "Please enter a longer paragraph."
-        sentences = text.split(".")
-        return "📄 Summary: " + ". ".join(sentences[:2])
-
-    return f"📘 Explanation: {text} explained in simple terms."
-
-# ===== UI =====
-demo = gr.Interface(
-    fn=study_helper,
-    inputs=[
-        gr.Textbox(lines=4, placeholder="Enter text..."),
-        gr.Radio(["Explain", "Summarize"], value="Explain")
-    ],
-    outputs="text",
-    title="🎓 AI Study Helper"
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN
 )
 
-# 🔥 IMPORTANT (THIS FIXES YOUR ISSUE)
-app = gr.mount_gradio_app(app, demo, path="/")
+def study_helper(user_input):
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "You are an AI study helper. Give short answers."},
+                {"role": "user", "content": user_input}
+            ]
+        )
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+iface = gr.Interface(
+    fn=study_helper,
+    inputs=gr.Textbox(placeholder="Ask your study question..."),
+    outputs="text",
+    title="AI Study Helper"
+)
+
+iface.launch()
