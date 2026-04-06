@@ -20,3 +20,4 @@ This project is an AI-powered study assistant built for the OpenEnv RL Hackathon
 ## Notes
 - Designed to run within 2 CPU and 8GB RAM constraints
 - Output format follows OpenEnv submission guidelines
+update
